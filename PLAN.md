@@ -118,7 +118,7 @@ Five tabs:
 
 ### What changes because of this
 
-- **Collection without Google Places:** use **OpenStreetMap (Overpass API, free)** with `office=property_management` and name matches on "Hausverwaltung" / "Immobilienverwaltung" inside Berlin's boundary. Then add scraped directories (Gelbe Seiten, 11880, Das Örtliche) and the VDIV Berlin-Brandenburg member list.
+- **Collection without Google Places:** use **OpenStreetMap (Overpass API, free)** with `office=property_management` and name matches on "Hausverwaltung" / "Immobilienverwaltung" inside Berlin's boundary. Then add scraped directories (Gelbe Seiten, Das Örtliche) and the VDIV Berlin-Brandenburg member list. 11880 was dropped: Cloudflare blocks it (403 + captcha) after a few requests, and websites are only on per-company detail pages.
 - **LLM:** Mistral chat API with JSON output (`mistral-small-latest` for bulk extraction to keep costs low).
 - **Contacts without Hunter/Apollo:**
   - Names of managing directors from the **Impressum** (legally required).
