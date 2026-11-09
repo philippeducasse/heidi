@@ -25,6 +25,7 @@ OUT_PATH = DATA_DIR / "extracted.jsonl"
 MAX_RETRIES = 5
 WORKERS = 4  # parallel requests; lower this if you keep hitting rate limits
 LIMIT = 5  # max sites per run, for testing; set to None to process all sites
+MIN_QUOTE_CHARS = 15
 
 
 def norm(text):
@@ -45,9 +46,12 @@ def call_mistral(site):
 
 
 def find_source(quote, site):
-    # URL of the crawled page that contains the quote, or None if it's on no page (likely hallucinated)
+    # URL of the crawled page that contains the quote, or None if it's on no page (likely hallucinated).
+    # Quotes shorter than MIN_QUOTE_CHARS don't count: "x" or "2010" would match almost any page.
     q = norm(quote)
-    return next((p["url"] for p in site["pages"].values() if q and q in norm(p["text"])), None)
+    if len(q) < MIN_QUOTE_CHARS:
+        return None
+    return next((p["url"] for p in site["pages"].values() if q in norm(p["text"])), None)
 
 
 def check(item, site):
