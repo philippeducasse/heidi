@@ -8,15 +8,23 @@ Emails are only kept if they literally appear on the site: never guessed.
 import json
 import os
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
 
+from common import DATA_DIR, read_jsonl
+
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 API_URL = "https://api.mistral.ai/v1/chat/completions"
 MODEL = "mistral-small-latest"
 PROMPT = (Path(__file__).parent / "prompts" / "extract.txt").read_text(encoding="utf-8")
+OUT_PATH = DATA_DIR / "extracted.jsonl"
+MAX_RETRIES = 5
+WORKERS = 4  # parallel requests; lower this if you keep hitting rate limits
+LIMIT = 5  # max sites per run, for testing; set to None to process all sites
 
 
 def norm(text):
@@ -25,9 +33,13 @@ def norm(text):
 
 def call_mistral(site):
     pages = "\n\n".join(f"=== PAGE {name} ({p['url']}) ===\n{p['text']}" for name, p in site["pages"].items())
-    resp = requests.post(API_URL, timeout=120, headers={"Authorization": f"Bearer {os.environ['MISTRAL_API_KEY']}"},
-                         json={"model": MODEL, "temperature": 0, "response_format": {"type": "json_object"},
-                               "messages": [{"role": "system", "content": PROMPT}, {"role": "user", "content": pages}]})
+    for attempt in range(MAX_RETRIES):
+        resp = requests.post(API_URL, timeout=120, headers={"Authorization": f"Bearer {os.environ['MISTRAL_API_KEY']}"},
+                             json={"model": MODEL, "temperature": 0, "response_format": {"type": "json_object"},
+                                   "messages": [{"role": "system", "content": PROMPT}, {"role": "user", "content": pages}]})
+        if resp.status_code not in (429, 500, 502, 503):  # 429 = rate limit, 5xx = server busy: wait and retry
+            break
+        time.sleep(2 ** attempt * 5)  # 5s, 10s, 20s, 40s, 80s
     resp.raise_for_status()
     return json.loads(resp.json()["choices"][0]["message"]["content"])
 
@@ -57,3 +69,28 @@ def extract(site):
     fields = {k: check(v, site) for k, v in raw.items() if k != "contacts"}
     contacts = [c for c in (check_contact(c, site) for c in raw.get("contacts") or []) if c]
     return {"domain": site["domain"], "fields": fields, "contacts": contacts}
+
+
+def main() -> None:
+    done = {r["domain"] for r in read_jsonl(OUT_PATH)} if OUT_PATH.exists() else set()
+    sites = [s for s in read_jsonl(DATA_DIR / "crawl.jsonl") if s["ok"] and s["domain"] not in done][:LIMIT]
+    print(f"{len(done)} sites already extracted, {len(sites)} to go")
+    failed = 0
+    with ThreadPoolExecutor(max_workers=WORKERS) as pool, OUT_PATH.open("a", encoding="utf-8") as out:
+        futures = {pool.submit(extract, s): s["domain"] for s in sites}
+        for i, future in enumerate(as_completed(futures), start=1):
+            try:
+                r = future.result()
+            except Exception as e:  # failures are not saved, so the next run retries them
+                failed += 1
+                print(f"[{i}/{len(sites)}] FAILED {futures[future]}: {type(e).__name__} {e}"[:200])
+                continue
+            out.write(json.dumps(r, ensure_ascii=False) + "\n")
+            out.flush()
+            ok = sum(1 for v in r["fields"].values() if v and v["verified"])
+            print(f"[{i}/{len(sites)}] {r['domain']}: {ok} verified fields, {len(r['contacts'])} contacts")
+    print(f"done, {failed} failed" + (" (run again to retry them)" if failed else ""))
+
+
+if __name__ == "__main__":
+    main()
