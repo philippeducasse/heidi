@@ -28,7 +28,11 @@ MAX_CHARS = 8000  # per page, to keep the Mistral prompt small
 def fetch(url):
     resp = requests.get(url, headers=HEADERS, timeout=15)
     resp.raise_for_status()
-    soup = BeautifulSoup(resp.content, "html.parser")  # from bytes, so the page's own charset is used
+    # Use the charset the server declares, replacing only invalid bytes. Left to itself, BeautifulSoup
+    # switches to a guess (e.g. iso8859_10) when a UTF-8 page has a few bad bytes, garbling every umlaut.
+    # Without a declared charset, BeautifulSoup reads it from the page's <meta> tag.
+    declared = resp.encoding if "charset" in resp.headers.get("content-type", "").lower() else None
+    soup = BeautifulSoup(resp.content.decode(declared, errors="replace") if declared else resp.content, "html.parser")
     mails = {a["href"][7:].split("?")[0].strip().lower() for a in soup.select('a[href^="mailto:"]')}
     for tag in soup(["script", "style", "noscript", "svg"]):
         tag.decompose()
