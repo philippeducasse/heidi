@@ -1,5 +1,8 @@
 """Collect Berlin property management companies from Das Örtliche.
 
+Where the data sits: a JavaScript variable (handlerData) inside the page.
+How it's read:       a regex cuts it out and it's read as JSON. No selectors.
+
 Each results page embeds all listing data in a JavaScript array (`var handlerData = [[...]]`),
 which is valid JSON, so we read that instead of parsing the HTML.
 """

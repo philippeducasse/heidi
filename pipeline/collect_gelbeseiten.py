@@ -1,5 +1,8 @@
 """Collect Berlin property management companies from Gelbe Seiten.
 
+Where the data sits: behind the hidden endpoint the "load more" button calls.
+How it's read:       call that endpoint, then BeautifulSoup selectors on the HTML it returns.
+
 Uses the site's own "load more" endpoint (/ajaxsuche), which returns 10 results per call.
 """
 import base64

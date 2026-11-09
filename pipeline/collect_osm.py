@@ -1,4 +1,8 @@
-"""Collect Berlin property management companies from OpenStreetMap (Overpass API)."""
+"""Collect Berlin property management companies from OpenStreetMap (Overpass API).
+
+Where the data sits: a public API (Overpass).
+How it's read:       send a query, get JSON back. No HTML at all.
+"""
 import requests
 
 from common import DATA_DIR, USER_AGENT, write_jsonl
