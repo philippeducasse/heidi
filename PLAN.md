@@ -130,7 +130,7 @@ Five tabs:
 1. Project setup + OSM Overpass collector
 2. Directory collectors (one per batch)
 3. Dedupe
-4. Website crawler (homepage, Impressum, about/team pages)
+4. Website crawler (homepage, Impressum, about/team pages). Also: measure how often sources disagree on name/website/phone, to check the source priority used in dedupe. The Impressum's legal name and address override the directories.
 5. Mistral extraction with evidence quotes
 6. Scoring + tiers
 7. Contacts (Impressum names, personal emails published on the site)
