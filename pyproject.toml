@@ -7,4 +7,5 @@ dependencies = [
     "requests>=2.32",
     "beautifulsoup4>=4.12",
     "python-dotenv>=1.0",
+    "openpyxl>=3.1",
 ]
