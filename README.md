@@ -33,6 +33,8 @@ re-run individually. Run them from the `pipeline/` folder:
 | 8 | `python score.py` | `scored.jsonl` | points, tier, exclusions |
 | 9 | `python contacts.py` | `contacts.jsonl` | Impressum names, published emails only |
 | 10 | `python export.py` | `heidi_berlin_property_managers.xlsx` | the five-tab workbook |
+| 11 | `python validate.py sample` | `spotcheck.csv` | 30 random companies to check by hand |
+| 12 | `python validate.py report` | `validation.json` | accuracy; re-run step 10 to put it in the sheet |
 
 `extract.py` appends as it goes and skips domains already done, so it is safe to interrupt and
 restart. `python extract.py --recheck` re-verifies the saved quotes without calling the API.
@@ -53,6 +55,12 @@ The LLM must return a verbatim quote for every value. `extract.py` then searches
 the crawled pages; if it is not found, the value is marked unverified and no later step uses it.
 A missing value therefore never earns points, and every filled cell in the Leads tab has a
 source URL next to it.
+
+That check only proves the quote is really on the page. Whether the *value* follows from the
+quote is checked by hand: `validate.py` draws 30 random companies with a fixed seed and writes
+every verified value with its quote and URL to `data/spotcheck.csv` for a reviewer to mark
+ok / wrong / unclear. The resulting accuracy is printed, stored in `data/validation.json`, and
+shown at the top of the Methodology tab the next time `export.py` runs.
 
 Emails are only kept when they literally appear on the company's own site. No pattern guessing,
 no email-finding services. Cold B2B email in Germany is restricted by UWG § 7 and the personal

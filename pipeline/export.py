@@ -5,12 +5,15 @@ Every KPI column is followed by a <field>_source column holding the URL of the p
 was taken from, so any row can be checked by hand. Empty means: not stated on the website.
 The tab texts live in sheet_text.py.
 """
+import json
+
 import sheet_text as T
 from common import DATA_DIR, read_jsonl
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from score import KPI_FIELDS
+from validate import REPORT_PATH as VALIDATION_PATH
 
 OUT_PATH = DATA_DIR / "heidi_berlin_property_managers.xlsx"
 BASE = ["company_id", "name", "website", "phone", "street", "postcode", "district"]
@@ -55,6 +58,14 @@ def sheet(wb, title, rows, headers=None, note=None, widths=60):
     return ws
 
 
+def validation_note():
+    # Accuracy measured by hand in validate.py; absent until someone has filled the spot-check file.
+    if not VALIDATION_PATH.exists():
+        return T.VALIDATION_MISSING
+    v = json.loads(VALIDATION_PATH.read_text(encoding="utf-8"))
+    return T.VALIDATION_NOTE.format(**v, accuracy_pct=f"{v['accuracy']:.0%}")
+
+
 def main() -> None:
     scored = read_jsonl(DATA_DIR / "scored.jsonl")
     leads = [lead_row(r) for r in scored if not r["excluded_reason"]]
@@ -72,7 +83,7 @@ def main() -> None:
                 for r in scored if r["excluded_reason"]]
     sheet(wb, "Excluded", excluded, ["company_id", "name", "website", "sources", "reason"],
           note=T.EXCLUSION_NOTE, widths=60)
-    sheet(wb, "Methodology", T.METHOD_ROWS, T.METHOD_HEADERS, widths=90)
+    sheet(wb, "Methodology", T.METHOD_ROWS, T.METHOD_HEADERS, note=validation_note(), widths=90)
     wb.save(OUT_PATH)
     print(f"{len(leads)} leads, {len(contacts)} contacts, {len(excluded)} excluded -> {OUT_PATH}")
     print("\n" + T.PUBLISH_STEPS)

@@ -75,3 +75,8 @@ SOURCE_NOTE = ("All values come from public sources. Every KPI value in the Lead
                "left empty on purpose.")
 EXCLUSION_NOTE = ("Own-stock landlords and cooperatives are filtered by this pattern on the company and legal name: "
                   + OWN_STOCK.pattern)
+VALIDATION_NOTE = ("Measured accuracy: {values_checked} values across {companies_checked} randomly sampled companies "
+                   "were re-checked by hand against the source page: {accuracy_pct} correct ({verdicts}). "
+                   "The sample and the per-value verdicts are in data/spotcheck.csv.")
+VALIDATION_MISSING = ("Measured accuracy: not yet available - run 'python validate.py sample', fill in the verdict "
+                      "column, then 'python validate.py report' and rebuild this workbook.")
