@@ -9,6 +9,7 @@ import json
 
 import sheet_text as T
 from common import DATA_DIR, read_jsonl
+from contacts import COLUMNS as CONTACT_COLUMNS
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
@@ -16,7 +17,7 @@ from score import KPI_FIELDS
 from validate import REPORT_PATH as VALIDATION_PATH
 
 OUT_PATH = DATA_DIR / "heidi_berlin_property_managers.xlsx"
-BASE = ["company_id", "name", "website", "phone", "street", "postcode", "district"]
+BASE = ["company_id", "name", "segment", "website", "phone", "street", "postcode", "district"]
 TAIL = ["sources", "website_ok", "emails", "directory_name"]
 HEADER_FILL = PatternFill("solid", fgColor="1F3864")
 TIER_FILL = {"A": "C6EFCE", "B": "FFEB9C", "C": "F2F2F2"}
@@ -78,7 +79,8 @@ def main() -> None:
             ws[f"{tier_col}{row}"].fill = PatternFill("solid", fgColor=fill)
     sheet(wb, "KPI definitions", T.KPI_ROWS + [[]] + T.SCORING_NOTES, T.KPI_HEADERS, widths=70)
     contacts = read_jsonl(DATA_DIR / "contacts.jsonl")
-    sheet(wb, "Contacts", contacts, list(contacts[0]), note=T.LEGAL_NOTE, widths=45)
+    sheet(wb, "Contacts", contacts, list(contacts[0]) if contacts else CONTACT_COLUMNS,
+          note=T.LEGAL_NOTE, widths=45)
     excluded = [[r["company_id"], r["name"], r["website"], ", ".join(r["sources"]), r["excluded_reason"]]
                 for r in scored if r["excluded_reason"]]
     sheet(wb, "Excluded", excluded, ["company_id", "name", "website", "sources", "reason"],

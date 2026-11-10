@@ -17,6 +17,8 @@ from common import DATA_DIR, read_jsonl, write_jsonl
 from dedupe import domain_key
 
 GENERIC = re.compile(r"^(info|kontakt|office|mail|post|empfang|service|buchhaltung|verwaltung|team)@")
+COLUMNS = ["company_id", "company_name", "tier", "score", "website", "name", "role", "email",
+           "evidence_url", "quote", "source", "linkedin_search"]
 # Most senior first: these are the people who can decide on a metering contract.
 SENIORITY = ["geschäftsführ", "inhaber", "vorstand", "prokurist", "leitung", "objektbetreu", "buchhaltung"]
 

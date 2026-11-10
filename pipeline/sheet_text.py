@@ -3,7 +3,7 @@
 Kept apart from export.py so the code stays short and the wording can be edited without
 touching logic. Each KPI row: name, what it means, where it comes from, points.
 """
-from score import OWN_STOCK
+from score import LISTED_GROUPS
 
 KPI_HEADERS = ["KPI", "Why it matters to Heidi", "Where the value comes from", "Max points"]
 KPI_ROWS = [
@@ -12,7 +12,8 @@ KPI_ROWS = [
      "30 (>=2000: 30, >=500: 20, >=100: 10, below: 5)"],
     ["employees", "Size signal and fallback when the unit count is not published.",
      "Company website (team pages, 'Über uns').", "25, only if units_managed is missing (>=15: 25, >=5: 15, below: 5)"],
-    ["management_types", "WEG and Mietverwaltung fall under the Heizkostenverordnung, so they are the core buyers. "
+    ["management_types", "WEG and Mietverwaltung manage residential property under the HeizkostenV, so they are "
+     "the core buyers. "
      "Pure Gewerbe or SEV is a weaker fit.", "Company website (service descriptions).",
      "25 if WEG or Miet, 10 if only other types"],
     ["software_or_portal", "Digital maturity: a company already running Casavi, Immoware24, DOMUS or a tenant portal "
@@ -35,10 +36,18 @@ SCORING_NOTES = [
     ["Tier B", "score >= 30 - second wave."],
     ["Tier C", "score < 30 - mostly small or thinly documented companies."],
     ["Excluded", "Not a lead at all; see the Excluded tab for the reason. These rows get no tier."],
+    ["Segment", "Verwalter / Wohnungsunternehmen / Wohnungsunternehmen (kommunal) / Genossenschaft. This is the "
+     "sales motion, not the quality: own-stock owners are customers of Heidi too (they are named as segments on "
+     "heidisystems.com), but they decide more slowly and municipal ones usually run a tender. Sort by it to split "
+     "the quick wins from the long game."],
     ["Unverified values", "A value is only scored if the LLM's quote was found character-for-character on the "
      "crawled page. Anything else is treated as missing, so a missing value never earns points."],
-    ["Timing", "All heat and water meters must be remotely readable by 31 Dec 2026 (HKVO SS 5). "
-     "Every company in this list has to act before that date, which is the hook for the first call."],
+    ["Timing", "Section 5(3) HeizkostenV: meters that are not remotely readable and were installed up to "
+     "1 Dec 2021 must be retrofitted or replaced by 31 Dec 2026 - they then have to be readable without entering "
+     "the flat, connectable to a smart-meter gateway and interoperable (section 5(2) and (5)). "
+     "The duty is the building owner's, and the property manager procures it for them. "
+     "If it is missed, tenants may cut their heating-cost share by 3 percent (section 12(1)). "
+     "A Feb 2026 manager survey put equipment levels at only 58-61 percent, so most of this list still has to act."],
 ]
 METHOD_HEADERS = ["Step", "What happens", "Script"]
 METHOD_ROWS = [
@@ -73,8 +82,12 @@ LEGAL_NOTE = ("Legal note: cold B2B email in Germany is restricted by UWG SS 7 (
 SOURCE_NOTE = ("All values come from public sources. Every KPI value in the Leads tab has a source URL next to it, "
                "and the underlying quote is stored in data/extracted.jsonl. Values without a verified quote are "
                "left empty on purpose.")
-EXCLUSION_NOTE = ("Own-stock landlords and cooperatives are filtered by this pattern on the company and legal name: "
-                  + OWN_STOCK.pattern)
+EXCLUSION_NOTE = ("Only two things get a company excluded: its website shows it is not a property manager at all, "
+                  "or it is one of the large listed residential groups that meter in-house or tender centrally - "
+                  "matched on: " + LISTED_GROUPS.pattern + ". "
+                  "Own-stock owners (Wohnungsunternehmen, municipal companies, Genossenschaften) are NOT excluded: "
+                  "heidisystems.com names them as customer segments. They stay in the Leads tab with their segment "
+                  "marked, because they buy on a longer cycle and often through a tender.")
 VALIDATION_NOTE = ("Measured accuracy: {values_checked} values across {companies_checked} randomly sampled companies "
                    "were re-checked by hand against the source page: {accuracy_pct} correct ({verdicts}). "
                    "The sample and the per-value verdicts are in data/spotcheck.csv.")

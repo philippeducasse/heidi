@@ -6,6 +6,9 @@ Companies that are not potential customers get an exclusion reason instead of a 
 
 Points (max 100): size 30, core market 25, digital 10, growth 10, VDIV member 10,
 named decision maker 10, independent 5. Tiers: A >= 50, B >= 30, C below.
+
+Own-stock owners (Wohnungsunternehmen, municipal companies, Genossenschaften) are kept as leads
+and marked with a segment, not excluded: Heidi sells to them too, just on a different cycle.
 """
 import re
 from collections import Counter
@@ -13,12 +16,27 @@ from collections import Counter
 from common import DATA_DIR, read_jsonl, write_jsonl
 from dedupe import domain_key
 
-# Municipal housing companies, listed landlords and cooperatives manage their own stock and buy
-# metering through large central tenders: not leads for Heidi.
-OWN_STOCK = re.compile(r"(?-i:\be\.?G\b)|genossenschaft|wohnungsbaugesellschaft|degewo|gewobag|howoge|gesobau"
-                       r"|stadt ?und ?land|\bwbm\b|berlinovo|vonovia|deutsche wohnen|covivio|heimstaden|grand city", re.I)
+# Segmentation instead of blanket exclusion: heidisystems.com lists "Wohnungsunternehmen" and
+# "Asset Manager & Fonds" as customer segments alongside the Verwalter, so own-stock owners are
+# leads too - they just need a different motion (longer cycle, often a tender). Only the large
+# listed groups are dropped: they run metering in-house or through central European tenders.
+LISTED_GROUPS = re.compile(r"vonovia|deutsche wohnen|covivio|heimstaden|grand city|akelius|adler real estate", re.I)
+MUNICIPAL = re.compile(r"degewo|gewobag|howoge|gesobau|stadt ?und ?land|\bwbm\b|berlinovo|wohnungsbaugesellschaft", re.I)
+COOPERATIVE = re.compile(r"(?-i:\be\.?G\b)|genossenschaft|baugenossenschaft", re.I)
+HOUSING_COMPANY = re.compile(r"wohnungsunternehmen|wohnungsgesellschaft|immobiliengesellschaft", re.I)
 KPI_FIELDS = ["is_property_manager", "management_types", "units_managed", "employees", "founded_year",
               "parent_company", "software_or_portal", "metering_provider", "hiring", "managing_directors"]
+
+
+def segment(text):
+    # Sales motion, not quality: a Genossenschaft is a fine lead, it just buys differently.
+    if MUNICIPAL.search(text):
+        return "Wohnungsunternehmen (kommunal)"
+    if COOPERATIVE.search(text):
+        return "Genossenschaft"
+    if HOUSING_COMPANY.search(text):
+        return "Wohnungsunternehmen"
+    return "Verwalter"
 
 
 def verified(fields, key):
@@ -36,7 +54,7 @@ def size_points(units, employees):
 def score(c, f):
     types = set(verified(f, "management_types") or [])
     return {"size": size_points(verified(f, "units_managed"), verified(f, "employees")),
-            "core_market": 25 if types & {"WEG", "Miet"} else 10 if types else 0,  # residential = HKVO metering
+            "core_market": 25 if types & {"WEG", "Miet"} else 10 if types else 0,  # residential = HeizkostenV metering
             "digital": 10 if verified(f, "software_or_portal") else 0,
             "growth": 10 if verified(f, "hiring") is True else 0,
             "vdiv_member": 10 if "vdiv" in c["sources"] else 0,
@@ -45,8 +63,8 @@ def score(c, f):
 
 
 def exclusion(c, f, domain):
-    if OWN_STOCK.search(f"{c['name']} {verified(f, 'legal_name') or ''} {domain or ''}"):
-        return "Own-stock landlord or cooperative (central metering tenders)"
+    if LISTED_GROUPS.search(f"{c['name']} {verified(f, 'legal_name') or ''} {domain or ''}"):
+        return "Listed residential group: meters in-house or via central tenders"
     if verified(f, "is_property_manager") is False:
         return f"Website shows it is not a property manager: \"{f['is_property_manager']['quote'][:120]}\""
 
@@ -57,6 +75,7 @@ def build(c, crawl, extracted):
     points, reason = score(c, f), exclusion(c, f, domain)
     total = sum(points.values())
     return {**c, "name": verified(f, "legal_name") or c["name"], "directory_name": c["name"],
+            "segment": segment(f"{c['name']} {verified(f, 'legal_name') or ''} {domain or ''}"),
             "website_ok": bool(crawl.get(domain, {}).get("ok")) and any(f.values()),
             **{k: verified(f, k) for k in KPI_FIELDS},
             "evidence": {k: [v["source_url"], v["quote"]] for k, v in f.items() if v and v["verified"]},
@@ -71,6 +90,7 @@ def main() -> None:
                    key=lambda r: -r["score"])
     write_jsonl(DATA_DIR / "scored.jsonl", leads)
     print("tiers:", dict(Counter(r["tier"] or "excluded" for r in leads)), "-> data/scored.jsonl")
+    print("segments:", dict(Counter(r["segment"] for r in leads if not r["excluded_reason"])))
     for r in [r for r in leads if r["tier"]][:10]:
         print(f"  {r['score']:3d} {r['tier']}  {r['name']}  {r['points']}")
 

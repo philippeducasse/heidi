@@ -12,9 +12,11 @@ Return one JSON object with exactly these keys:
 
 {
   "is_property_manager": {"value": true/false, "quote": "..."},
-      // true if the company manages residential or commercial properties for owners
-      // (WEG-Verwaltung, Mietverwaltung, Sondereigentumsverwaltung). false for e.g. pure brokers,
-      // cleaning/caretaker services, software firms, political parties, housing cooperatives managing only their own stock.
+      // true if the company manages residential or commercial properties: for third-party owners
+      // (WEG-Verwaltung, Mietverwaltung, Sondereigentumsverwaltung) OR as the owner of its own
+      // housing stock (Wohnungsunternehmen, Wohnungsbaugesellschaft, Wohnungsgenossenschaft).
+      // Both need heat and water metering, so both count as true.
+      // false for e.g. pure brokers (Makler), cleaning/caretaker services, software firms, political parties.
   "legal_name": {"value": "...", "quote": "..."},              // full legal name incl. legal form, usually in the Impressum
   "managing_directors": {"value": ["First Last", ...], "quote": "..."},  // Geschäftsführer / Inhaber / Vorstand
   "management_types": {"value": ["WEG" | "Miet" | "SEV" | "Gewerbe", ...], "quote": "..."},
