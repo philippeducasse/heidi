@@ -34,7 +34,11 @@ SCORING_NOTES = [
     ["Total", "Sum of the points above, capped by design at 100."],
     ["Tier A", "score >= 50 - contact first."],
     ["Tier B", "score >= 30 - second wave."],
-    ["Tier C", "score < 30 - mostly small or thinly documented companies."],
+    ["Tier C", "score < 30 - small or thinly documented, but the website was read."],
+    ["Unrated (no website data)", "No website, or the site could not be read, or nothing on it could be verified. "
+     "These rows are NOT low-quality leads: we simply know nothing about them yet, and a large manager without a "
+     "website looks exactly like a one-person shop. They keep phone and address, so they are callable. "
+     "Sort by tier and work A, then B, then these - do not confuse them with C."],
     ["Excluded", "Not a lead at all; see the Excluded tab for the reason. These rows get no tier."],
     ["Segment", "Verwalter / Wohnungsunternehmen / Wohnungsunternehmen (kommunal) / Genossenschaft. This is the "
      "sales motion, not the quality: own-stock owners are customers of Heidi too (they are named as segments on "
@@ -88,8 +92,10 @@ EXCLUSION_NOTE = ("Only two things get a company excluded: its website shows it 
                   "Own-stock owners (Wohnungsunternehmen, municipal companies, Genossenschaften) are NOT excluded: "
                   "heidisystems.com names them as customer segments. They stay in the Leads tab with their segment "
                   "marked, because they buy on a longer cycle and often through a tender.")
-VALIDATION_NOTE = ("Measured accuracy: {values_checked} values across {companies_checked} randomly sampled companies "
-                   "were re-checked by hand against the source page: {accuracy_pct} correct ({verdicts}). "
+VALIDATION_NOTE = ("Measured accuracy: {values} values across {companies} randomly sampled companies were re-checked "
+                   "by hand against the source page: {accuracy_pct} correct ({verdicts}). The {top_values} values of "
+                   "the top-scoring companies were checked separately ({top_pct}) and are deliberately NOT folded "
+                   "into the headline number, because they were hand-picked rather than drawn at random. "
                    "The sample and the per-value verdicts are in data/spotcheck.csv.")
 VALIDATION_MISSING = ("Measured accuracy: not yet available - run 'python validate.py sample', fill in the verdict "
                       "column, then 'python validate.py report' and rebuild this workbook.")

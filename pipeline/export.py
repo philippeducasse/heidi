@@ -13,14 +13,14 @@ from contacts import COLUMNS as CONTACT_COLUMNS
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
-from score import KPI_FIELDS
+from score import KPI_FIELDS, UNRATED
 from validate import REPORT_PATH as VALIDATION_PATH
 
 OUT_PATH = DATA_DIR / "heidi_berlin_property_managers.xlsx"
 BASE = ["company_id", "name", "segment", "website", "phone", "street", "postcode", "district"]
 TAIL = ["sources", "website_ok", "emails", "directory_name"]
 HEADER_FILL = PatternFill("solid", fgColor="1F3864")
-TIER_FILL = {"A": "C6EFCE", "B": "FFEB9C", "C": "F2F2F2"}
+TIER_FILL = {"A": "C6EFCE", "B": "FFEB9C", "C": "F2F2F2", UNRATED: "DDEBF7"}
 
 
 def cell(value):
@@ -64,7 +64,11 @@ def validation_note():
     if not VALIDATION_PATH.exists():
         return T.VALIDATION_MISSING
     v = json.loads(VALIDATION_PATH.read_text(encoding="utf-8"))
-    return T.VALIDATION_NOTE.format(**v, accuracy_pct=f"{v['accuracy']:.0%}")
+    head, top = v["headline_random_sample"], v["top_scoring_sample"]
+    pct = lambda s: f"{s['accuracy']:.0%}" if s["accuracy"] is not None else "not checked"
+    return T.VALIDATION_NOTE.format(values=head["values"], companies=head["companies"],
+                                    accuracy_pct=pct(head), verdicts=head["verdicts"],
+                                    top_values=top["values"], top_pct=pct(top))
 
 
 def main() -> None:

@@ -8,7 +8,7 @@ title: Berlin property managers — lead pipeline for Heidi Systems
 Format: Marp deck. Render with `npx @marp-team/marp-cli@latest docs/approach.md --pdf`,
 or paste each slide into Google Slides (slides are separated by `---`).
 
-NUMBERS MARKED «...» ARE FILLED IN AFTER THE PIPELINE RUN. See the checklist at the end.
+Two TODOs remain: the measured accuracy and the Google Sheet link.
 -->
 
 # Berlin property managers
@@ -16,7 +16,7 @@ NUMBERS MARKED «...» ARE FILLED IN AFTER THE PIPELINE RUN. See the checklist a
 
 Philippe · AI Agent Builder case · 10 November 2026
 
-**Deliverable:** «N» qualified companies, «M» named contacts, every value traceable to a source URL.
+**Deliverable:** 1,225 qualified companies, 1,050 named contacts, every value traceable to a source URL.
 **What was actually built:** the pipeline that produces that sheet, re-runnable in a day.
 
 ---
@@ -109,7 +109,8 @@ printed openly in the sheet's "KPI definitions" tab.
 | Independent | 5 | Groups meter in-house |
 | *Current metering provider* | *0* | *Not scored — it shapes the pitch (switch vs. greenfield)* |
 
-**Tiers:** A ≥ 50 · B ≥ 30 · C below.
+**Tiers:** A ≥ 50 (234) · B ≥ 30 (133) · C below (123) · **Unrated (735)** — no website data, so
+the score would say nothing. Those keep phone and address and stay callable; they are not C.
 
 **Segment, not exclusion.** heidisystems.com names *Wohnungsunternehmen* and *Asset Manager &
 Fonds* as customer segments, so own-stock owners stay in the list, tagged
@@ -136,10 +137,10 @@ every later step ignores it.
 quote is on the page, but does the value follow from it? `validate.py` draws **30 random
 companies** (fixed seed) and exports every value with its quote and URL for a hand check.
 
-> **Measured accuracy: «X» % correct across «V» values** («ok» ok / «wrong» wrong / «unclear» unclear).
-> Weakest field: «field» at «Y» %.
+> **Measured accuracy: TODO — fill from data/validation.json after the spot-check.**
 
-**Coverage:** «C» of «N» companies had a reachable website; «U» published a unit count.
+**Coverage:** 490 of 1,225 companies had a website we could read and verify; 735 are unrated for
+lack of website data; only 119 publish a unit count, so most size points come from employees.
 
 ---
 
@@ -161,7 +162,7 @@ disagreement.
 
 **Next — scale**
 All of Germany: only the Overpass boundary and directory queries are Berlin-specific; cost scales
-with the LLM step, ~«€» per 1,000 companies · CRM sync with score and evidence URLs attached.
+with the LLM step · CRM sync with score and evidence URLs attached.
 
 **Next — make it an agent (the actual role)**
 Scheduled re-crawl that watches for *change* — a new vacancy, a new portal, a lost metering
@@ -176,7 +177,7 @@ manage, what they use today, what § 5 Abs. 3 HeizkostenV means for them before 
 
 ## Thank you
 
-**Sheet:** «link — anyone with the link, Viewer»
+**Sheet:** TODO — paste the share link (anyone with the link, Viewer)
 **Code:** 13 scripts, ~950 lines — `README.md` explains every step and how to re-run it.
 
 One rule holds the whole thing together:
@@ -188,13 +189,7 @@ One rule holds the whole thing together:
 ---
 
 <!--
-NUMBERS TO FILL IN AFTER THE PIPELINE RUN
-  «N»  total leads                      -> export.py output
-  «M»  contacts                         -> contacts.py output
-  «C»  companies with a reachable site  -> count website_ok in scored.jsonl
-  «U»  companies with a unit count      -> count units_managed in scored.jsonl
-  «X» «V» «ok» «wrong» «unclear» «field» «Y»  -> data/validation.json
-  «€»  LLM cost per 1,000 companies     -> Mistral dashboard after the run
-  «link»  Google Sheet share link       -> after the manual import
-Also: tier counts (A/B/C) from score.py, and the excluded count, are worth adding to slide 1.
+STILL TO FILL IN
+  Measured accuracy (slide 5)    -> data/validation.json, after filling data/spotcheck.csv
+  Google Sheet link (last slide) -> after the manual import
 -->

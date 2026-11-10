@@ -6,6 +6,8 @@ Companies that are not potential customers get an exclusion reason instead of a 
 
 Points (max 100): size 30, core market 25, digital 10, growth 10, VDIV member 10,
 named decision maker 10, independent 5. Tiers: A >= 50, B >= 30, C below.
+Companies with no verified website data are "Unrated" rather than C: their score reflects
+missing data, not a weak fit, and sorting them into C would hide them from the reader.
 
 Own-stock owners (Wohnungsunternehmen, municipal companies, Genossenschaften) are kept as leads
 and marked with a segment, not excluded: Heidi sells to them too, just on a different cycle.
@@ -26,6 +28,7 @@ COOPERATIVE = re.compile(r"(?-i:\be\.?G\b)|genossenschaft|baugenossenschaft", re
 HOUSING_COMPANY = re.compile(r"wohnungsunternehmen|wohnungsgesellschaft|immobiliengesellschaft", re.I)
 KPI_FIELDS = ["is_property_manager", "management_types", "units_managed", "employees", "founded_year",
               "parent_company", "software_or_portal", "metering_provider", "hiring", "managing_directors"]
+UNRATED = "Unrated (no website data)"
 
 
 def segment(text):
@@ -69,18 +72,30 @@ def exclusion(c, f, domain):
         return f"Website shows it is not a property manager: \"{f['is_property_manager']['quote'][:120]}\""
 
 
+def tier(total, evidence, reason):
+    # No verified website data means the score says nothing: a 3.000-unit manager without a website
+    # would look identical to a one-person shop. Those rows are unrated, not C, so nobody writes
+    # them off by sorting on the tier column. They keep phone and address and stay workable.
+    if reason:
+        return None
+    if not evidence:
+        return UNRATED
+    return "A" if total >= 50 else "B" if total >= 30 else "C"
+
+
 def build(c, crawl, extracted):
     domain = domain_key(c["website"])
     f = extracted.get(domain, {}).get("fields", {})
     points, reason = score(c, f), exclusion(c, f, domain)
     total = sum(points.values())
+    evidence = {k: [v["source_url"], v["quote"]] for k, v in f.items() if v and v["verified"]}
     return {**c, "name": verified(f, "legal_name") or c["name"], "directory_name": c["name"],
             "segment": segment(f"{c['name']} {verified(f, 'legal_name') or ''} {domain or ''}"),
             "website_ok": bool(crawl.get(domain, {}).get("ok")) and any(f.values()),
             **{k: verified(f, k) for k in KPI_FIELDS},
-            "evidence": {k: [v["source_url"], v["quote"]] for k, v in f.items() if v and v["verified"]},
+            "evidence": evidence,
             "points": points, "score": total, "excluded_reason": reason,
-            "tier": None if reason else "A" if total >= 50 else "B" if total >= 30 else "C"}
+            "tier": tier(total, evidence, reason)}
 
 
 def main() -> None:
@@ -91,6 +106,9 @@ def main() -> None:
     write_jsonl(DATA_DIR / "scored.jsonl", leads)
     print("tiers:", dict(Counter(r["tier"] or "excluded" for r in leads)), "-> data/scored.jsonl")
     print("segments:", dict(Counter(r["segment"] for r in leads if not r["excluded_reason"])))
+    rated = [r for r in leads if r["tier"] and r["tier"] != UNRATED]
+    print(f"rated on website evidence: {len(rated)}, unrated (no website data): "
+          f"{sum(1 for r in leads if r['tier'] == UNRATED)}")
     for r in [r for r in leads if r["tier"]][:10]:
         print(f"  {r['score']:3d} {r['tier']}  {r['name']}  {r['points']}")
 
